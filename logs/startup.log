@@ -1,0 +1,24 @@
+2026-08-22 18:05:10 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:05:10 - Ollama ja estava rodando.
+2026-08-22 18:05:10 - Iniciando Worker em background.
+2026-08-22 18:05:12 - ERRO: O Worker nao foi encontrado apos a tentativa de inicializacao.
+2026-08-22 18:11:17 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:11:17 - Ollama ja estava rodando.
+2026-08-22 18:11:18 - Iniciando Worker em background com UTF-8 habilitado.
+2026-08-22 18:11:20 - Cantinho Ghibli iniciado automaticamente com sucesso.
+2026-08-22 18:18:02 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:18:03 - Ollama ja estava rodando.
+2026-08-22 18:18:03 - Iniciando Worker em background com UTF-8 habilitado.
+2026-08-22 18:18:06 - Cantinho Ghibli iniciado automaticamente com sucesso.
+2026-08-22 18:22:47 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:22:47 - Ollama ja estava rodando.
+2026-08-22 18:22:47 - Iniciando Worker em background com UTF-8 e PID lock.
+2026-08-22 18:22:50 - Cantinho Ghibli iniciado automaticamente com sucesso (PID 8984).
+2026-08-22 18:23:03 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:23:03 - Ollama ja estava rodando.
+2026-08-22 18:23:03 - Worker ja estava rodando (PID 8984). Nenhuma nova instancia foi criada.
+2026-08-22 18:25:49 - Inicializacao do Cantinho Ghibli solicitada.
+2026-08-22 18:25:52 - Ollama nao estava rodando. Iniciando ollama serve.
+2026-08-22 18:26:19 - Ollama iniciado com sucesso.
+2026-08-22 18:26:19 - Iniciando Worker em background com UTF-8 e PID lock.
+2026-08-22 18:26:23 - Cantinho Ghibli iniciado automaticamente com sucesso (PID 1708).

@@ -1,0 +1,90 @@
+Traceback (most recent call last):
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+        pool_request.request
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\http11.py", line 136, in handle_request
+    raise exc
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\http11.py", line 106, in handle_request
+    ) = self._receive_response_headers(**kwargs)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\http11.py", line 177, in _receive_response_headers
+    event = self._receive_event(timeout=timeout)
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_sync\http11.py", line 217, in _receive_event
+    data = self._network_stream.read(
+        self.READ_NUM_BYTES, timeout=timeout
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_backends\sync.py", line 126, in read
+    with map_exceptions(exc_map):
+         ~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Caleb\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\worker.py", line 35, in <module>
+    process_once() if args.once else run_forever()
+                                     ~~~~~~~~~~~^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\worker.py", line 30, in run_forever
+    process_once(); time.sleep(settings.worker_poll_seconds)
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\worker.py", line 7, in process_once
+    items=pending_items()
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\notion\inbox.py", line 13, in pending_items
+    pages=query_data_source(settings.notion_inbox_data_source_id,filter_body=filt,sorts=[{'timestamp':'created_time','direction':'ascending'}])
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\notion\client.py", line 54, in query_data_source
+    data = request(
+        "POST",
+        f"/data_sources/{data_source_id}/query",
+        payload,
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\app\notion\client.py", line 24, in request
+    response = client.request(
+        method,
+    ...<2 lines>...
+        json=json_body,
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+        request,
+    ...<2 lines>...
+        history=[],
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+        request,
+        follow_redirects=follow_redirects,
+        history=history,
+    )
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Caleb\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Caleb\Downloads\cantinho-ghibli-ai-v2.3\cantinho-ghibli-ai-v2.3\.venv\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout: The read operation timed out
