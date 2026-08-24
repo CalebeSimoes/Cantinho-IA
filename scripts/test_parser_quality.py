@@ -3,6 +3,7 @@ from app.ai.parsers import (
     fast_finance,
     fast_wishlist,
     fast_place,
+    fast_routine,
 )
 from app.ai.router import route_message
 
@@ -69,6 +70,21 @@ check(
     "router financas",
     route_message("Paguei 32 no Uber").destination,
     "financas",
+)
+
+# 5. Tarefa com prazo nao pode virar evento de calendario.
+hbo = fast_routine(
+    "Calebe precisa assinar HBO final do mes"
+)
+check("hbo tarefa", hbo.tarefa, "assinar hbo")
+check("hbo frequencia", hbo.frequencia, "Pontual")
+check("hbo responsavel", hbo.responsavel, "Eu")
+check(
+    "router hbo",
+    route_message(
+        "Calebe precisa assinar HBO final do mes"
+    ).destination,
+    "rotina",
 )
 
 print("\nTodos os testes de qualidade passaram.")

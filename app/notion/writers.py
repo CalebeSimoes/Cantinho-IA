@@ -1,5 +1,12 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.config import settings
-from app.notion.client import create_page, property_name
+from app.notion.client import (
+    create_page,
+    optional_property_name,
+    property_name,
+)
 from app.schemas.actions import (
     FinanceAction,
     WishlistAction,
@@ -41,6 +48,17 @@ def _p(ds_id: str, logical_name: str) -> str:
     return property_name(ds_id, logical_name)
 
 
+def _optional_rich(
+    props: dict,
+    ds_id: str,
+    logical_name: str,
+    value: str,
+):
+    real_name = optional_property_name(ds_id, logical_name)
+    if real_name and value:
+        props[real_name] = _rich(value)
+
+
 def write_finance(a: FinanceAction) -> dict:
     missing = a.required_missing()
     if missing:
@@ -59,6 +77,7 @@ def write_finance(a: FinanceAction) -> dict:
         _p(ds, "Tipo"): _select(a.tipo),
         _p(ds, "Valor"): {"number": a.valor},
     }
+    _optional_rich(props, ds, "Origem IA", a.source_key)
     return create_page(ds, props)
 
 
@@ -85,6 +104,7 @@ def write_wishlist(a: WishlistAction) -> dict:
         props[_p(ds, "Preco estimado")] = {
             "number": a.preco_estimado
         }
+    _optional_rich(props, ds, "Origem IA", a.source_key)
 
     return create_page(ds, props)
 
@@ -113,6 +133,7 @@ def write_place(a: PlaceAction) -> dict:
         props[_p(ds, "Valor estimado")] = {
             "number": a.valor_estimado
         }
+    _optional_rich(props, ds, "Origem IA", a.source_key)
 
     return create_page(ds, props)
 
@@ -124,15 +145,24 @@ def write_calendar(a: CalendarAction) -> dict:
         )
 
     ds = settings.notion_calendar_data_source_id
+    start = a.data.isoformat()
+    if a.hora:
+        start = datetime.combine(
+            a.data,
+            a.hora,
+            tzinfo=ZoneInfo(settings.app_timezone),
+        ).isoformat()
+
     props = {
         _p(ds, "Evento"): _title(a.evento),
-        _p(ds, "Data"): {"date": {"start": a.data.isoformat()}},
+        _p(ds, "Data"): {"date": {"start": start}},
         _p(ds, "Local"): _rich(a.local),
         _p(ds, "Observacao"): _rich(a.observacao),
         _p(ds, "Quem"): _select(a.quem),
         _p(ds, "Status"): _select(a.status),
         _p(ds, "Tipo"): _select(a.tipo),
     }
+    _optional_rich(props, ds, "Origem IA", a.source_key)
 
     return create_page(ds, props)
 
@@ -155,5 +185,7 @@ def write_routine(a: RoutineAction) -> dict:
         props[_p(ds, "Dia / Data")] = {
             "date": {"start": a.dia_data.isoformat()}
         }
+    _optional_rich(props, ds, "Recorrencia", a.recurrence_rule)
+    _optional_rich(props, ds, "Origem IA", a.source_key)
 
     return create_page(ds, props)
