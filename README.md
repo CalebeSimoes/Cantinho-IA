@@ -87,7 +87,7 @@ wishlist e lugares: [🌿 Abrir Overview do Cantinho](https://app.notion.com/p/5
 
 Há atalhos para ele na Home e na página mobile.
 
-## Interpretação semântica v3.0
+## Interpretação semântica v3.1
 
 O Router combina pontuação Python e Ollama. Frases comuns são resolvidas
 localmente com baixa latência; ambiguidades reais recebem uma segunda análise
@@ -97,11 +97,22 @@ Exemplos:
 
 - `Assinei HBO por 30 reais` → Finanças.
 - `Quero assinar HBO` → Wishlist.
+- `Calebe precisa comprar um micro-ondas até sexta, de até 300 reais`
+  → Wishlist, status Planejando, responsável, prazo e teto de preço.
+- `Comprar ração toda segunda-feira` → Rotina recorrente.
+- `Me lembre de comprar ração sexta` → Rotina pontual.
+- `Pesquisar preços antes de comprar um notebook` → Rotina pontual.
 - `Calebe precisa assinar HBO final do mes` → Rotina, prazo no último dia do mês.
 - `Cinema sábado às 20h` → Calendário.
 - `Quero conhecer o MASP` → Lugares.
 
-Uma data pode ser prazo de tarefa e não força mais o destino Calendário.
+Uma data pode ser prazo de tarefa ou data desejada de compra e não força o
+destino Calendário. Compras futuras vão para a Wishlist; compras realizadas
+com valor vão para Finanças. Números de capacidade, quantidade ou voltagem não
+são tratados como preço sem contexto monetário.
+
+A Wishlist v3.1 mantém `Preço estimado` por compatibilidade e acrescenta
+`Relação do preço` (Máximo, Aproximado, Exato ou Mínimo) e `Responsável`.
 
 ## Arquivos novos principais
 

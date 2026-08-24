@@ -350,6 +350,51 @@ WISHLIST_PREFIXES = [
 ]
 
 
+PURCHASE_VERB_PATTERN = r"\b(?:comprar|adquirir|encomendar)\b"
+
+
+def _wishlist_price_relation(message: str) -> str | None:
+    if not _has_price_context(message):
+        return None
+
+    t = normalize(message)
+    if re.search(r"\b(?:de\s+)?(?:ate|no maximo)\b", t):
+        return "Máximo"
+    if re.search(r"\b(?:a partir de|no minimo)\b", t):
+        return "Mínimo"
+    if re.search(r"\b(?:cerca de|por volta de|mais ou menos)\b", t):
+        return "Aproximado"
+    if re.search(r"\bexatamente\b", t):
+        return "Exato"
+    return "Aproximado"
+
+
+def _wishlist_status(message: str) -> str:
+    t = normalize(message)
+    if re.search(
+        r"\b(?:preciso|precisa|precisamos|tenho que|tem que|temos que|"
+        r"devo|deve|devemos|vou|vai|vamos|planejo|planejamos)\b",
+        t,
+    ):
+        return "Planejando"
+    return "Quero"
+
+
+def _strip_purchase_constraints(value: str) -> str:
+    price = rf"(?:r\$\s*)?{NUMBER_PATTERN}(?:\s*(?:reais?|contos?))?"
+    patterns = [
+        rf"\b(?:de\s+)?(?:ate|no maximo)\s+{price}",
+        rf"\b(?:a partir de|no minimo)\s+{price}",
+        rf"\b(?:por|que custa|custando|no valor de|exatamente|"
+        rf"cerca de|por volta de|mais ou menos)\s+{price}",
+    ]
+    for pattern in patterns:
+        value = re.sub(pattern, " ", value, flags=re.I)
+    value = strip_temporal_expressions(value)
+    value = re.sub(r"\b(?:ate|para|de)\s*$", "", value)
+    return re.sub(r"\s+", " ", value).strip(" .,-")
+
+
 def _wishlist_type(item: str) -> str:
     t = normalize(item)
 
@@ -377,7 +422,9 @@ def _wishlist_type(item: str) -> str:
         word in t
         for word in [
             "sofa", "mesa", "cadeira", "cafeteira", "panela",
-            "air fryer", "geladeira", "microondas", "cama",
+            "air fryer", "geladeira", "microondas", "micro-ondas",
+            "forno", "lava-loucas", "lava-louças", "guarda-roupa",
+            "ar-condicionado", "cama",
         ]
     ):
         return "Casa"
@@ -385,31 +432,25 @@ def _wishlist_type(item: str) -> str:
     return "Item"
 
 
-def fast_wishlist(message: str) -> WishlistAction | None:
+def fast_wishlist(
+    message: str,
+    author: str = "Eu",
+) -> WishlistAction | None:
     t = normalize(message)
 
-    prefix = next(
-        (item for item in WISHLIST_PREFIXES if item in t),
-        None,
-    )
-    if not prefix:
-        return None
+    purchase = re.search(PURCHASE_VERB_PATTERN, t)
+    if purchase:
+        start = purchase.end()
+    else:
+        prefix = next(
+            (item for item in WISHLIST_PREFIXES if item in t),
+            None,
+        )
+        if not prefix:
+            return None
+        start = t.find(prefix) + len(prefix)
 
-    start = t.find(prefix) + len(prefix)
-    item = t[start:].strip(" .,-")
-
-    # Remove apenas o trecho de preco. A ordem importa:
-    # "fone de ouvido de ate 400" -> "fone de ouvido"
-    price_patterns = [
-        rf"\s+de\s+ate\s+(?:r\$\s*)?{NUMBER_PATTERN}.*$",
-        rf"\s+ate\s+(?:r\$\s*)?{NUMBER_PATTERN}.*$",
-        rf"\s+por\s+(?:r\$\s*)?{NUMBER_PATTERN}.*$",
-        rf"\s+que\s+custa\s+(?:r\$\s*)?{NUMBER_PATTERN}.*$",
-        rf"\s+custando\s+(?:r\$\s*)?{NUMBER_PATTERN}.*$",
-    ]
-
-    for pattern in price_patterns:
-        item = re.sub(pattern, "", item, flags=re.I)
+    item = _strip_purchase_constraints(t[start:])
 
     item = _strip_leading_article(item)
     item = _title_case_soft(item)
@@ -419,21 +460,33 @@ def fast_wishlist(message: str) -> WishlistAction | None:
 
     return WishlistAction(
         item=item[:200],
-        preco_estimado=money(message),
+        data_desejada=resolve_date_expression(message, now().date()),
+        preco_estimado=(
+            money(message) if _has_price_context(message) else None
+        ),
+        preco_relacao=_wishlist_price_relation(message),
+        responsavel=_subject_responsible(message, author),
+        status=_wishlist_status(message),
         tipo=_wishlist_type(item),
         observacao=message,
     )
 
 
-def parse_wishlist(message: str) -> WishlistAction:
-    parsed = fast_wishlist(message)
+def parse_wishlist(
+    message: str,
+    author: str = "Eu",
+) -> WishlistAction:
+    parsed = fast_wishlist(message, author)
     if parsed:
         return parsed
 
     return structured_chat(
         WishlistAction,
         WISHLIST_PROMPT,
-        f"Data atual: {now().date()}\nMensagem: {message}",
+        (
+            f"Data atual: {now().date()}\n"
+            f"Autor: {author}\nMensagem: {message}"
+        ),
     )
 
 
@@ -492,7 +545,10 @@ def _has_price_context(text: str) -> bool:
     t = normalize(text)
     return bool(
         re.search(
-            rf"(?:r\$|reais|real|ate\s+{NUMBER_PATTERN}|por\s+{NUMBER_PATTERN})",
+            rf"(?:r\$|reais?\b|contos?\b|"
+            rf"(?:ate|no maximo|por|custa|custando|no valor de|"
+            rf"a partir de|no minimo|cerca de|por volta de|mais ou menos)"
+            rf"\s+(?:r\$\s*)?{NUMBER_PATTERN})",
             t,
             flags=re.I,
         )
@@ -579,7 +635,8 @@ def _subject_responsible(message: str, author: str) -> str:
     user = normalize(settings.user_name)
 
     if re.search(
-        r"\b(?:nos dois|juntos|precisamos|temos que|devemos)\b",
+        r"\b(?:nos dois|juntos|precisamos|temos que|devemos|queremos|"
+        r"vamos|planejamos)\b",
         t,
     ) or (
         partner in t
@@ -631,7 +688,7 @@ def _strip_action_prefix(text: str) -> str:
     )
     action_prefixes = [
         rf"^{subject}(?:preciso|precisa|precisamos|tenho que|tem que|temos que|devo|deve|devemos)\s+",
-        rf"^{subject}(?:nao esquecer(?: de)?|lembrar de)\s+",
+        rf"^{subject}(?:nao esquecer(?: de)?|lembrar de|me lembr(?:a|e)(?: de)?)\s+",
         rf"^{subject}(?:fica responsavel por)\s+",
     ]
 
@@ -692,7 +749,8 @@ def fast_routine(
     )
     task_signal = re.search(
         r"\b(?:preciso|precisa|precisamos|tenho que|tem que|temos que|"
-        r"devo|deve|devemos|nao esquecer|lembrar de|todo dia|toda semana|"
+        r"devo|deve|devemos|nao esquecer|lembrar de|me lembr(?:a|e)(?: de)?|"
+        r"todo dia|toda semana|"
         r"todo mes|diariamente|semanalmente|mensalmente|quinzenalmente|"
         r"dias uteis|fim de semana|uma vez por mes|"
         r"toda (?:segunda|terca|quarta|quinta|sexta|sabado|domingo)|"
@@ -700,7 +758,7 @@ def fast_routine(
         t,
     )
     action_signal = re.search(
-        r"\b(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"\b(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
         t,
     )
     if desire or not (task_signal or action_signal):

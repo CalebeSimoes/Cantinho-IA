@@ -59,6 +59,17 @@ def _optional_rich(
         props[real_name] = _rich(value)
 
 
+def _optional_select(
+    props: dict,
+    ds_id: str,
+    logical_name: str,
+    value: str | None,
+):
+    real_name = optional_property_name(ds_id, logical_name)
+    if real_name and value:
+        props[real_name] = _select(value)
+
+
 def write_finance(a: FinanceAction) -> dict:
     missing = a.required_missing()
     if missing:
@@ -104,6 +115,18 @@ def write_wishlist(a: WishlistAction) -> dict:
         props[_p(ds, "Preco estimado")] = {
             "number": a.preco_estimado
         }
+    _optional_select(
+        props,
+        ds,
+        "Relacao do preco",
+        a.preco_relacao,
+    )
+    _optional_select(
+        props,
+        ds,
+        "Responsavel",
+        a.responsavel,
+    )
     _optional_rich(props, ds, "Origem IA", a.source_key)
 
     return create_page(ds, props)

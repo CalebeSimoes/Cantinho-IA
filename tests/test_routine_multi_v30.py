@@ -375,7 +375,7 @@ def test_origin_marker_recovers_create_after_crash(monkeypatch):
         ("Tenho que assinar o seguro", "rotina"),
         ("Comprei um notebook por 2500", "financas"),
         ("Quero comprar um notebook", "wishlist"),
-        ("Tenho que comprar pão", "rotina"),
+        ("Tenho que comprar pão", "wishlist"),
         ("Quero visitar o MASP", "lugares"),
         ("Visitar o MASP", "lugares"),
         ("Preciso visitar minha mãe", "rotina"),

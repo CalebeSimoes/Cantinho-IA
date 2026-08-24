@@ -36,6 +36,22 @@ function Write-Fail {
     $script:Fail++
 }
 
+function Convert-ToDateTimeOffset {
+    param([object]$Value)
+
+    if ($Value -is [DateTimeOffset]) {
+        return $Value
+    }
+    if ($Value -is [DateTime]) {
+        return [DateTimeOffset]::new([DateTime]$Value)
+    }
+    return [DateTimeOffset]::Parse(
+        [string]$Value,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind
+    )
+}
+
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Cyan
 Write-Host "        STATUS - CANTINHO GHIBLI AI" -ForegroundColor Cyan
@@ -199,7 +215,7 @@ if (Test-Path $WatchdogStateFile) {
     try {
         $WatchdogState = Get-Content -Raw -LiteralPath $WatchdogStateFile |
             ConvertFrom-Json
-        $StateAt = [DateTimeOffset]::Parse([string]$WatchdogState.checked_at)
+        $StateAt = Convert-ToDateTimeOffset $WatchdogState.checked_at
         $StateAge = [Math]::Round(
             ([DateTimeOffset]::UtcNow - $StateAt.ToUniversalTime()).TotalSeconds,
             1
@@ -246,7 +262,7 @@ if (Test-Path $HeartbeatFile) {
     try {
         $Heartbeat = Get-Content -Raw -LiteralPath $HeartbeatFile |
             ConvertFrom-Json
-        $HeartbeatAt = [DateTimeOffset]::Parse([string]$Heartbeat.timestamp)
+        $HeartbeatAt = Convert-ToDateTimeOffset $Heartbeat.timestamp
         $HeartbeatAge = [Math]::Round(
             ([DateTimeOffset]::UtcNow - $HeartbeatAt.ToUniversalTime()).TotalSeconds,
             1

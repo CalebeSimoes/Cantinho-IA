@@ -134,6 +134,17 @@ class WishlistAction(BaseModel):
     link: str | None = None
     observacao: str = ""
     preco_estimado: float | None = None
+    preco_relacao: Literal[
+        "Máximo",
+        "Aproximado",
+        "Exato",
+        "Mínimo",
+    ] | None = None
+    responsavel: Literal[
+        "Eu",
+        "Minha esposa",
+        "Nós dois",
+    ] | None = None
     source_key: str = ""
 
     prioridade: Literal["🔥 Alta", "⭐ Média", "🌱 Baixa"] = "⭐ Média"

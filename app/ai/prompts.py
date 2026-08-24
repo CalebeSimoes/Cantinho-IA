@@ -6,7 +6,8 @@ DISTINCOES OBRIGATORIAS:
 - query: pergunta que pede para ler, listar, contar, comparar ou calcular
   informacoes ja registradas. Nunca trate uma pergunta como novo registro.
 - financas: dinheiro que ja entrou ou saiu. Ex.: "paguei a internet".
-- wishlist: vontade de adquirir algo, sem obrigacao. Ex.: "quero assinar HBO".
+- wishlist: aquisicao futura, desejada ou necessaria. Ex.: "quero assinar
+  HBO" ou "preciso comprar um micro-ondas ate 300 reais".
 - lugares: desejo de conhecer/visitar um lugar ou experiencia.
 - calendario: evento ao qual alguem comparece, reserva ou compromisso.
 - rotina: acao que alguem precisa executar, com ou sem prazo/recorrencia.
@@ -20,7 +21,10 @@ Uma data nao transforma automaticamente uma tarefa em calendario.
 "Cinema sabado as 20h" -> calendario.
 "Quero conhecer o MASP" -> lugares.
 "Lavar banheiro toda sexta" -> rotina.
-"Tenho que comprar pao" -> rotina, pois ainda e tarefa.
+"Tenho que comprar pao" -> wishlist, pois e uma aquisicao futura.
+"Comprar pao toda segunda" -> rotina, pois a compra e recorrente.
+"Me lembre de comprar pao sexta" -> rotina, pois o ato principal e lembrar.
+"Pesquisar precos antes de comprar um notebook" -> rotina.
 "Comprei pao por 20 reais" -> financas.
 "Visitar o MASP" -> lugares.
 "Ir ao dentista terca as 9h" -> calendario.
@@ -89,7 +93,7 @@ REGRAS:
 - Uma compra de item da wishlist gera update wishlist=Comprado + create financas.
 - Uma reserva de lugar com data gera update lugares=Reservado + create calendario.
 - Passagem comprada gera financas + lugares; calendario somente se houver data.
-- "tenho que comprar" é tarefa futura, não compra realizada.
+- "tenho que comprar" é compra planejada na wishlist, não compra realizada.
 - "quero comprar" é wishlist, não finanças.
 - Use no máximo uma ação por efeito; não duplique destinos sem necessidade.
 - requires_confirmation=true.
@@ -99,7 +103,8 @@ financas: movimento, valor, tipo="Saída", categoria em Moradia/Alimentação/
 Transporte/Lazer/Compras/Saúde/Viagem/Outros, pago_por em Eu/Minha esposa/
 Nós dois, status em Pago/Pendente, data, observacao;
 calendario: evento, data, hora, quem, status, tipo, local, observacao;
-wishlist: item, status, preco_estimado;
+wishlist: item, status, preco_estimado, preco_relacao, data_desejada,
+responsavel;
 lugares: lugar, status, data_planejada, tipo, local, descricao;
 rotina: tarefa, dia_data, frequencia, recurrence_rule, responsavel, status.
 
@@ -139,14 +144,22 @@ Retorne somente o schema.
 """
 
 WISHLIST_PROMPT = """
-Extraia um desejo de compra.
+Extraia uma compra futura, desejada ou necessaria.
 
 Item é obrigatório.
 Preço é opcional e nunca deve ser inventado.
 Se não houver preço, use preco_estimado=null, NÃO use 0.
+Interprete "ate 300 reais" como preco_relacao="Máximo".
+Interprete "por volta de 300" como "Aproximado", "exatamente 300"
+como "Exato" e "a partir de 300" como "Mínimo".
+Datas representam data_desejada, nao evento de calendario.
+Use status="Planejando" para preciso/tem que/vou/planejo comprar e
+status="Quero" para quero/gostaria/talvez comprar.
+Responsavel: autor/Calebe/Caleb/eu -> Eu; Carol/minha esposa ->
+Minha esposa; nos/precisamos/vamos -> Nós dois.
 
 Tipos: Item, Presente, Casa, Tecnologia, Roupa, Outro.
-Status padrão: Quero.
+Nao confunda capacidade, quantidade ou voltagem com preco.
 
 Retorne somente o schema.
 """
@@ -212,6 +225,10 @@ recorrente. Exemplo: "Calebe precisa assinar HBO final do mes" significa:
 
 "Final do mes" e prazo pontual. So use Mensal quando houver recorrencia
 explicita como "todo mes" ou "mensalmente".
+
+Comprar/adquirir algo no futuro pertence a Wishlist, mesmo quando a frase
+usa preciso/tem que. Use Rotina para compra recorrente, lembrete de compra
+ou tarefa preparatoria como pesquisar, comparar e cotar precos.
 
 Responsavel:
 - autor/Calebe/Caleb/eu -> Eu

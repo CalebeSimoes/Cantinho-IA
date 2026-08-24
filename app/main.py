@@ -1,9 +1,9 @@
 from fastapi import FastAPI,HTTPException
 from app.processor import process_message
 from app.schemas.actions import MessageRequest,ProcessResult
-app=FastAPI(title='🌿 Cantinho Ghibli AI v2',version='2.0.0',description='Notion Inbox + Router + Ollama local + 5 áreas')
+app=FastAPI(title='🌿 Cantinho Ghibli AI',version='3.1.0',description='Notion Inbox + Router + Ollama local + 5 áreas')
 @app.get('/')
-def root(): return {'app':'Cantinho Ghibli AI','version':'2.0.0','docs':'/docs'}
+def root(): return {'app':'Cantinho Ghibli AI','version':'3.1.0','docs':'/docs'}
 @app.get('/health')
 def health(): return {'status':'ok'}
 @app.post('/mensagem',response_model=ProcessResult)

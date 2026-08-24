@@ -49,6 +49,19 @@ def _matches(text: str, pattern: str) -> bool:
     return bool(re.search(pattern, text, flags=re.I))
 
 
+def _is_negated_purchase(text: str) -> bool:
+    verbs = r"(?:comprar|adquirir|encomendar)"
+    return any(
+        _matches(text, pattern)
+        for pattern in (
+            rf"\bnao\s+(?:mais\s+)?{verbs}\b",
+            rf"\bnao\s+(?:quero|queremos|preciso|precisamos|posso|"
+            rf"podemos|vou|vamos|devo|devemos)\s+(?:mais\s+)?{verbs}\b",
+            rf"\bnunca\s+(?:vou\s+|vamos\s+)?{verbs}\b",
+        )
+    )
+
+
 def _looks_like_clock_time(text: str) -> bool:
     return _matches(
         text,
@@ -62,7 +75,7 @@ def score_message(message: str) -> dict[str, IntentScore]:
 
     task_frame = _matches(
         t,
-        r"\b(?:preciso|precisa|precisamos|tenho que|tem que|temos que|devo|deve|devemos|nao esquecer(?: de)?|lembrar de|fica responsavel por)\b",
+        r"\b(?:preciso|precisa|precisamos|tenho que|tem que|temos que|devo|deve|devemos|nao esquecer(?: de)?|lembrar de|me lembr(?:a|e)(?: de)?|fica responsavel por)\b",
     )
     recurrence = _matches(
         t,
@@ -76,7 +89,7 @@ def score_message(message: str) -> dict[str, IntentScore]:
     temporal = contains_temporal_expression(t) or _looks_like_clock_time(t)
     bare_action = _matches(
         t,
-        r"^(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"^(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
     )
 
     direct_interrogative = _matches(
@@ -99,6 +112,27 @@ def score_message(message: str) -> dict[str, IntentScore]:
         direct_interrogative
         or embedded_interrogative
         or explicit_information_request
+    )
+    purchase_verb = _matches(
+        t,
+        r"\b(?:comprar|adquirir|encomendar)\b",
+    )
+    purchase_reminder = _matches(
+        t,
+        r"\b(?:nao esquecer(?: de)?|lembrar de|me lembr(?:a|e)(?: de)?)\b.*\b(?:comprar|adquirir|encomendar)\b",
+    )
+    purchase_research = _matches(
+        t,
+        r"\b(?:pesquisar|comparar|cotar|procurar)\b.*\b(?:antes de |para )?(?:comprar|adquirir|encomendar)\b",
+    )
+    purchase_negated = _is_negated_purchase(t)
+    planned_purchase = (
+        purchase_verb
+        and not recurrence
+        and not purchase_reminder
+        and not purchase_research
+        and not purchase_negated
+        and not information_request
     )
     question_about_records = _matches(
         t,
@@ -144,6 +178,11 @@ def score_message(message: str) -> dict[str, IntentScore]:
         scores["wishlist"].add(11, "aquisicao futura em consideracao")
     if _matches(t, r"\b(?:wishlist|lista de desejos|coloca na lista)\b"):
         scores["wishlist"].add(10, "lista de desejos explicita")
+    if planned_purchase:
+        scores["wishlist"].add(
+            16,
+            "aquisicao futura planejada",
+        )
 
     place_desire = _matches(
         t,
@@ -190,20 +229,33 @@ def score_message(message: str) -> dict[str, IntentScore]:
             "deslocamento para compromisso datado",
         )
 
-    if task_frame:
+    # Necessidade, prazo e responsavel sao atributos de uma compra futura.
+    # Eles so definem Rotina quando a compra e recorrente, um lembrete ou
+    # uma tarefa preparatoria como pesquisar/comparar precos.
+    routine_purchase_exception = (
+        purchase_verb
+        and (recurrence or purchase_reminder or purchase_research)
+    )
+    ordinary_task = not planned_purchase
+    if task_frame and ordinary_task:
         scores["rotina"].add(11, "obrigacao ou tarefa explicita")
     if recurrence:
         scores["rotina"].add(12, "recorrencia explicita")
     if _matches(
         t,
-        r"\b(?:limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
-    ):
+        r"\b(?:limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
+    ) and ordinary_task:
         scores["rotina"].add(4, "verbo de acao executavel")
-    if bare_action:
+    if bare_action and ordinary_task:
         scores["rotina"].add(8, "acao direta em formato de lembrete")
+    if routine_purchase_exception:
+        scores["rotina"].add(
+            8,
+            "compra recorrente, lembrete ou pesquisa preparatoria",
+        )
     if _matches(t, r"\b(?:tarefa|rotina|pendencia|lembrete)\b"):
         scores["rotina"].add(8, "tarefa declarada")
-    if task_frame and temporal:
+    if task_frame and temporal and ordinary_task:
         scores["rotina"].add(4, "tarefa com prazo")
     if _matches(t, r"\b(?:vence|vencimento)\b") and temporal:
         scores["rotina"].add(8, "obrigacao com vencimento")
@@ -277,6 +329,17 @@ def route_message(
     message: str,
     requested_destination: str = "Automático",
 ) -> RouterDecision:
+    text = normalize(message)
+    if _is_negated_purchase(text):
+        return RouterDecision(
+            destination="desconhecido",
+            confidence=.99,
+            reason=(
+                "compra negada exige confirmar se o item deve ser "
+                "adiado ou removido"
+            ),
+        )
+
     if requested_destination in EXPLICIT:
         return RouterDecision(
             destination=EXPLICIT[requested_destination],

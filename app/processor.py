@@ -255,7 +255,7 @@ def process_message(
         )
 
     elif dest == "wishlist":
-        a = parse_wishlist(message)
+        a = parse_wishlist(message, author)
         missing = _unique_missing(
             a.missing_fields + ([] if a.item else ["item"])
         )
@@ -264,7 +264,10 @@ def process_message(
         p = write_wishlist(a)
         summary = f"🛍️ Adicionado à Wishlist: {a.item}"
         if a.preco_estimado is not None:
-            summary += f" · R$ {a.preco_estimado:.2f}"
+            price_prefix = "até " if a.preco_relacao == "Máximo" else ""
+            summary += f" · {price_prefix}R$ {a.preco_estimado:.2f}"
+        if a.data_desejada:
+            summary += f" · até {a.data_desejada.isoformat()}"
 
     elif dest == "lugares":
         a = parse_place(message)

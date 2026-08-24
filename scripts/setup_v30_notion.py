@@ -37,6 +37,28 @@ def ensure_schema() -> list[str]:
         patch = {}
         if "Origem IA" not in schema:
             patch["Origem IA"] = {"rich_text": {}}
+        if label == "wishlist":
+            if "Responsável" not in schema:
+                patch["Responsável"] = {
+                    "select": {
+                        "options": [
+                            {"name": "Eu", "color": "blue"},
+                            {"name": "Minha esposa", "color": "pink"},
+                            {"name": "Nós dois", "color": "purple"},
+                        ]
+                    }
+                }
+            if "Relação do preço" not in schema:
+                patch["Relação do preço"] = {
+                    "select": {
+                        "options": [
+                            {"name": "Máximo", "color": "red"},
+                            {"name": "Aproximado", "color": "yellow"},
+                            {"name": "Exato", "color": "green"},
+                            {"name": "Mínimo", "color": "blue"},
+                        ]
+                    }
+                }
         if label == "routine":
             if "Recorrência" not in schema:
                 patch["Recorrência"] = {"rich_text": {}}

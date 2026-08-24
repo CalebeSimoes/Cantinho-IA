@@ -45,7 +45,7 @@ def no_ai(monkeypatch):
         ("Nao esquecer de levar o carro para revisao amanha", "rotina"),
         ("Todo mes precisamos organizar os documentos", "rotina"),
         ("A conta de luz vence dia 10", "rotina"),
-        ("Calebe precisa comprar detergente amanha", "rotina"),
+        ("Calebe precisa comprar detergente amanha", "wishlist"),
         ("Temos que limpar a cozinha toda semana", "rotina"),
         ("Lembrar de cancelar o teste gratis dia 28", "rotina"),
         ("Carol deve enviar o relatorio amanha", "rotina"),
@@ -53,7 +53,7 @@ def no_ai(monkeypatch):
         ("Diariamente tomar o remedio", "rotina"),
         ("Separar os documentos importantes", "rotina"),
         ("Revisar o contrato", "rotina"),
-        ("Comprar leite", "rotina"),
+        ("Comprar leite", "wishlist"),
     ],
 )
 def test_semantic_routing_without_ollama(

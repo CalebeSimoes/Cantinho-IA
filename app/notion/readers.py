@@ -54,6 +54,8 @@ class WishlistRecord:
     observacao: str
     link: str | None
     source_key: str = ""
+    preco_relacao: str | None = None
+    responsavel: str | None = None
 
 
 @dataclass(frozen=True)
@@ -148,6 +150,8 @@ def get_wishlist() -> list[WishlistRecord]:
             observacao=rich_text_value(_p(props, "Observacao")),
             link=url_value(_p(props, "Link")),
             source_key=rich_text_value(_p(props, "Origem IA")),
+            preco_relacao=select_value(_p(props, "Relacao do preco")),
+            responsavel=select_value(_p(props, "Responsavel")),
         )
         if record.item:
             records.append(record)

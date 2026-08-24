@@ -248,7 +248,7 @@ def _create_action_from_clause(
         parsed = parse_finance(clause, author)
         subject = parsed.movimento or clause
     elif destination == "wishlist":
-        parsed = parse_wishlist(clause)
+        parsed = parse_wishlist(clause, author)
         subject = parsed.item or clause
     elif destination == "lugares":
         parsed = parse_place(clause)
