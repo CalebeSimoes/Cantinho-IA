@@ -90,17 +90,17 @@ def score_message(message: str) -> dict[str, IntentScore]:
     temporal = contains_temporal_expression(t) or _looks_like_clock_time(t)
     bare_action = _matches(
         t,
-        r"^(?:(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina|eu)(?:\s+e\s+(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina))?\s+)?(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"^(?:(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina|eu)(?:\s+e\s+(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina))?\s+)?(?:assinar|renovar|cancelar|limpar|lavar|trocar|colocar|regar|dar|tirar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
     )
 
     direct_interrogative = _matches(
         t,
-        r"^(?:quanto(?:s|as)?|qual|quais|o que|do que|quando|onde|"
+        r"^(?:quanto(?:s|as)?|qual|quais|quem|o que|do que|quando|onde|existe|"
         r"tem(?:os)? (?:algo|algum|alguma))\b",
     )
     embedded_interrogative = "?" in message and _matches(
         t,
-        r"\b(?:quanto(?:s|as)?|qual|quais|o que|do que|quando|onde|"
+        r"\b(?:quanto(?:s|as)?|qual|quais|quem|o que|do que|quando|onde|existe|"
         r"tem(?:os)? (?:algo|algum|alguma)|ha (?:algo|algum|alguma)|"
         r"esta livre|ficou livre)\b",
     )
@@ -148,13 +148,18 @@ def score_message(message: str) -> dict[str, IntentScore]:
     ):
         scores["query"].add(5, "pergunta sobre dados registrados")
 
-    if _matches(
+    completed_money = _matches(
         t,
         r"\b(?:paguei|pagou|pagamos|gastei|gastou|gastamos|"
-        r"comprei|comprou|compramos|assinei|assinou|assinamos|"
-        r"recebi|recebeu|recebemos|ganhei|ganhou|ganhamos|"
-        r"transferi|transferiu|transferimos|depositei|depositou|depositamos)\b",
-    ):
+        r"assinei|assinou|assinamos|recebi|recebeu|recebemos|"
+        r"ganhei|ganhou|ganhamos|transferi|transferiu|transferimos|"
+        r"depositei|depositou|depositamos)\b",
+    )
+    completed_purchase = _matches(t, r"\b(?:comprei|comprou|compramos)\b") and not _matches(
+        t,
+        r"\b(?:nao|ainda nao)\s+(?:comprei|comprou|compramos)\b",
+    )
+    if completed_money or completed_purchase:
         scores["financas"].add(
             12,
             "movimentacao financeira ja realizada",
@@ -184,12 +189,27 @@ def score_message(message: str) -> dict[str, IntentScore]:
             16,
             "aquisicao futura planejada",
         )
+    product_hint = _matches(
+        t,
+        r"\b(?:micro-?ondas|geladeira|maquina de lavar|lava-loucas|"
+        r"panela|cafeteira|air ?fryer|celular|telefone|notebook|computador|"
+        r"tenis|sapato|camiseta|roupa|shampoo|condicionador|estante|sofa|"
+        r"mesa|cadeira|cama|colchao|televisao|tv|fone|presente)\b",
+    )
+    implicit_product_desire = product_hint and _matches(
+        t,
+        r"\b(?:(?:quero|quer|queremos|queria|gostaria)\s+(?:de\s+)?|"
+        r"(?:preciso|precisa|precisamos)\s+de\s+)"
+        r"(?:um|uma|uns|umas)?\s*[^,.!?;]{0,35}",
+    )
+    if implicit_product_desire and not information_request:
+        scores["wishlist"].add(18, "produto desejado para aquisicao futura")
 
     place_desire = _matches(
         t,
-        r"\b(?:quero|queremos|queria|gostaria|vamos|pretendo|pretendemos|"
+        r"\b(?:quero|quer|queremos|queria|gostaria|vamos|pretendo|pretendemos|"
         r"planejo|planejamos)\s+(?:de\s+)?(?:muito\s+)?"
-        r"(?:conhecer|visitar|ir(?: ao| a| no| na| para)?)\b",
+        r"(?:conhecer|visitar|experimentar|ir(?: ao| a| no| na| para)?)\b",
     )
     if place_desire:
         scores["lugares"].add(11, "desejo de conhecer ou visitar")
@@ -203,16 +223,34 @@ def score_message(message: str) -> dict[str, IntentScore]:
         r"\b(?:museu|parque|restaurante|hotel|pousada|praia|cidade|destino|passeio|experiencia)\b",
     ):
         scores["lugares"].add(2, "lugar ou experiencia")
+    if _matches(t, r"\bguardar a ideia de (?:ir|conhecer|visitar)\b"):
+        scores["lugares"].add(11, "ideia de lugar guardada para depois")
+    if _matches(
+        t,
+        r"\b(?:quero|queremos|gostaria) levar\b.*\b(?:restaurante|cafe|bistro|bar)\b",
+    ):
+        scores["lugares"].add(9, "desejo de levar alguem a um lugar")
 
     schedule = _matches(
         t,
         r"\b(?:agendar|agendei|agendamos|marcar|marquei|marcamos|"
         r"reservar|reservei|reservamos)\b",
-    )
+    ) and not _matches(t, r"\b(?:sem|nao)\s+(?:agendar|marcar|reservar)\b")
     event = _matches(
         t,
         r"\b(?:consulta|reuniao|aniversario|evento|compromisso|jantar|almoco|cinema|show|cerimonia|festa|entrevista|viagem|dentista|medico)\b",
+    ) and not _matches(
+        t,
+        r"\b(?:sem|nao)\s+(?:transformar[^,.!?;]{0,30}em\s+)?"
+        r"(?:um\s+)?compromisso\b",
     )
+    service_visit = temporal and _matches(
+        t,
+        r"\b(?:tecnico|entregador|instalador|encanador|eletricista)\b.*"
+        r"\b(?:vem|vira|chega|chegara)\b",
+    )
+    if service_visit:
+        scores["calendario"].add(11, "visita de servico com horario")
     if schedule:
         scores["calendario"].add(9, "acao de agendamento")
     if event:
@@ -244,17 +282,24 @@ def score_message(message: str) -> dict[str, IntentScore]:
         scores["rotina"].add(12, "recorrencia explicita")
     if _matches(
         t,
-        r"\b(?:limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
+        r"\b(?:limpar|lavar|trocar|colocar|regar|dar|tirar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
     ) and ordinary_task:
         scores["rotina"].add(4, "verbo de acao executavel")
     if bare_action and ordinary_task:
         scores["rotina"].add(8, "acao direta em formato de lembrete")
+        if temporal:
+            scores["rotina"].add(3, "acao direta com prazo")
     if routine_purchase_exception:
         scores["rotina"].add(
             8,
             "compra recorrente, lembrete ou pesquisa preparatoria",
         )
-    if _matches(t, r"\b(?:tarefa|rotina|pendencia|lembrete)\b"):
+    routine_label_negated = _matches(
+        t,
+        r"\b(?:sem criar|nao e|nao transformar[^,.!?;]{0,25}em)\s+"
+        r"(?:uma\s+)?(?:tarefa|rotina|pendencia|lembrete)\b",
+    )
+    if _matches(t, r"\b(?:tarefa|rotina|pendencia|lembrete)\b") and not routine_label_negated:
         scores["rotina"].add(8, "tarefa declarada")
     if task_frame and temporal and ordinary_task:
         scores["rotina"].add(4, "tarefa com prazo")
@@ -331,6 +376,16 @@ def route_message(
     requested_destination: str = "Automático",
 ) -> RouterDecision:
     text = normalize(message)
+    if _matches(
+        text,
+        r"\b(?:nao registre nada|nao e pedido nem pergunta|"
+        r"so estou comentando|estou pensando em voz alta)\b",
+    ) or _matches(text, r"^(?:r\$\s*)?[\d.,]+\s*(?:reais?)?[.!]?$"):
+        return RouterDecision(
+            destination="desconhecido",
+            confidence=.99,
+            reason="comentario explicito ou valor isolado sem acao",
+        )
     if _is_negated_purchase(text):
         return RouterDecision(
             destination="desconhecido",

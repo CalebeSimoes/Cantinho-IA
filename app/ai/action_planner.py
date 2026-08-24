@@ -273,6 +273,22 @@ def _create_action_from_clause(
 
 
 def _clause_plan(message: str, author: str) -> ActionPlan | None:
+    clauses = _multi_clauses(message)
+    if len(clauses) < 2:
+        return None
+    actions = []
+    for clause in clauses:
+        action = _create_action_from_clause(clause, author)
+        if action is None:
+            return None
+        actions.append(action)
+    return ActionPlan(
+        actions=actions,
+        reason="mensagem contém múltiplas ações explícitas",
+    )
+
+
+def _multi_clauses(message: str) -> list[str]:
     clauses = [
         item.strip(" .,-")
         for item in re.split(
@@ -282,29 +298,35 @@ def _clause_plan(message: str, author: str) -> ActionPlan | None:
         )
         if item.strip(" .,-")
     ]
-    if len(clauses) < 2:
-        return None
-    actions = []
-    for clause in clauses:
-        action = _create_action_from_clause(clause, author)
-        if action is None:
-            return None
-        actions.append(action)
-    if len({action.destination for action in actions}) < 2:
-        return None
-    return ActionPlan(
-        actions=actions,
-        reason="mensagem contém múltiplas ações explícitas",
+    dependent = re.compile(
+        r"^(?:nao\b|ainda nao\b|avisar quando terminar\b|"
+        r"(?:a\s+)?carol tambem vai\b|isso\b|cada acao\b|"
+        r"sao registros separados\b|a primeira parte\b)",
+        flags=re.I,
     )
+    return [
+        clause
+        for index, clause in enumerate(clauses)
+        if index == 0 or not dependent.search(normalize(clause))
+    ]
 
 
 def _looks_multi(message: str) -> bool:
-    scores = score_message(message)
-    active = [value for value in scores.values() if value.value >= 4]
-    text = normalize(message)
-    return len(active) >= 2 and bool(
-        re.search(r"\b(?:e|tambem|alem disso|junto com)\b", text)
-    )
+    if score_message(message)["query"].value >= 15:
+        return False
+    clauses = _multi_clauses(message)
+    if len(clauses) < 2:
+        return False
+    actionable = 0
+    for clause in clauses:
+        ranked = sorted(
+            score_message(clause).values(),
+            key=lambda evidence: evidence.value,
+            reverse=True,
+        )
+        if ranked[0].value >= 7:
+            actionable += 1
+    return actionable >= 2
 
 
 def _is_executable(plan: ActionPlan) -> bool:
@@ -354,6 +376,8 @@ def build_action_plan(
     reference: date | None = None,
 ) -> ActionPlan | None:
     reference = reference or date.today()
+    if score_message(message)["query"].value >= 15:
+        return None
     for builder in (_wishlist_purchase, _reservation, _ticket_purchase):
         plan = builder(message, author, reference)
         if plan:
