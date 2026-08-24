@@ -9,6 +9,7 @@ from app.notion.client import (
     title_value,
     update_page,
 )
+from app.notion.users import author_from_creator_id
 
 
 RESULT_LINK_LABEL = "Abrir registro \u2197"
@@ -19,6 +20,8 @@ class InboxItem:
     message: str
     destination: str
     author: str
+    creator_user_id: str | None = None
+    author_inferred: bool = False
 
 
 def _result_value(result: str, result_url: str | None = None) -> dict:
@@ -84,16 +87,33 @@ def pending_items():
         props = p.get("properties", {})
         msg = title_value(props.get("Mensagem"))
         if msg:
+            explicit_author = select_value(props.get("Autor"))
+            creator_user_id = p.get("created_by", {}).get("id")
+            inferred_author = (
+                None
+                if explicit_author
+                else author_from_creator_id(creator_user_id)
+            )
             out.append(
                 InboxItem(
                     p["id"],
                     msg,
                     select_value(props.get("Destino"))
                     or "Automático",
-                    select_value(props.get("Autor")) or "Eu",
+                    explicit_author or inferred_author or "Eu",
+                    creator_user_id,
+                    not explicit_author and inferred_author is not None,
                 )
             )
     return out
+
+
+def set_author(page_id: str, author: str):
+    value = "Carol" if author == "Carol" else "Eu"
+    update_page(
+        page_id,
+        {"Autor": {"select": {"name": value}}},
+    )
 
 
 def set_status(

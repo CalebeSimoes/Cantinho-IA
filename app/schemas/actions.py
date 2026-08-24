@@ -245,6 +245,7 @@ class RoutineAction(BaseModel):
     observacao: str = ""
     source_key: str = ""
     responsavel: Literal["Eu", "Minha esposa", "Nós dois"] = "Nós dois"
+    solicitado_por: Literal["Eu", "Minha esposa"] = "Eu"
     status: Literal["A fazer", "Em andamento", "Concluído"] = "A fazer"
 
 

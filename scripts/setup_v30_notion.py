@@ -64,6 +64,20 @@ def ensure_schema() -> list[str]:
                 patch["Recorrência"] = {"rich_text": {}}
             if "Última conclusão" not in schema:
                 patch["Última conclusão"] = {"date": {}}
+            if "Solicitado por" not in schema:
+                patch["Solicitado por"] = {
+                    "select": {
+                        "options": [
+                            {"name": "Eu", "color": "blue"},
+                            {
+                                "name": "Minha esposa",
+                                "color": "pink",
+                            },
+                        ]
+                    }
+                }
+            if "Notificar" not in schema:
+                patch["Notificar"] = {"people": {}}
 
             frequency = schema.get("Frequência", {}).get("select", {})
             existing = frequency.get("options", [])
@@ -103,6 +117,24 @@ def ensure_schema() -> list[str]:
                             {"id": item["id"]}
                             for item in existing_categories
                         ] + [{"name": "Lazer", "color": "purple"}]
+                    }
+                }
+
+            responsible = schema.get(
+                "Responsável",
+                {},
+            ).get("select", {})
+            existing_responsible = responsible.get("options", [])
+            responsible_names = {
+                item.get("name") for item in existing_responsible
+            }
+            if "Nós dois" not in responsible_names:
+                patch["Responsável"] = {
+                    "select": {
+                        "options": [
+                            {"id": item["id"]}
+                            for item in existing_responsible
+                        ] + [{"name": "Nós dois", "color": "purple"}]
                     }
                 }
         if patch:

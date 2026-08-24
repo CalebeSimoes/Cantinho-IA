@@ -202,7 +202,7 @@ def strip_temporal_expressions(text: str) -> str:
         r"\b(?:no|na|ate|para|pro|pra)?\s*(?:fim|final|inicio|comeco) (?:do|deste|desse) (?:proximo )?mes\b",
         r"\b(?:(?:no|neste|nesse|ate(?: o)?|para(?: o)?|pro|pra)\s+)?(?:fim|final) (?:de|da) semana\b",
         r"\b(?:na|ate|para)?\s*(?:semana|mes) que vem\b",
-        r"\b(?:hoje|amanha|depois de amanha)\b",
+        r"\b(?:depois de amanha|amanha|hoje)(?:\s+(?:a|de|pela)\s+(?:manha|tarde|noite))?\b",
         r"\bdaqui a \d+ dias?\b",
         rf"\b\d{{1,2}}\s+de\s+(?:{month_names})(?:\s+de\s+\d{{4}})?\b",
         r"\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b",

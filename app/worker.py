@@ -5,7 +5,7 @@ import traceback
 from app.config import settings
 from app.health import write_worker_heartbeat
 from app.learning import record_learning_case
-from app.notion.inbox import pending_items, set_status
+from app.notion.inbox import pending_items, set_author, set_status
 from app.processor import process_message
 
 
@@ -26,6 +26,19 @@ def _learn_safely(item, status, destination, summary):
         traceback.print_exc()
 
 
+def _persist_inferred_author_safely(item):
+    if not getattr(item, "author_inferred", False):
+        return
+    try:
+        set_author(item.page_id, item.author)
+    except Exception:
+        print(
+            "  ⚠️ Não foi possível preencher o Autor inferido no Inbox.",
+            flush=True,
+        )
+        traceback.print_exc()
+
+
 def process_once():
     items = pending_items()
     if not items:
@@ -37,6 +50,7 @@ def process_once():
     for item in items:
         print(f"→ {item.message}", flush=True)
         try:
+            _persist_inferred_author_safely(item)
             set_status(
                 item.page_id,
                 "Processando",

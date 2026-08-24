@@ -99,6 +99,7 @@ class RoutineRecord:
     recurrence_rule: str = "once"
     last_completed: date | None = None
     source_key: str = ""
+    solicitado_por: str | None = None
 
 
 def _time(prop: dict | None) -> time | None:
@@ -221,6 +222,7 @@ def get_routines() -> list[RoutineRecord]:
             ),
             last_completed=_date(_p(props, "Ultima conclusao")),
             source_key=rich_text_value(_p(props, "Origem IA")),
+            solicitado_por=select_value(_p(props, "Solicitado por")),
         )
         if record.tarefa:
             records.append(record)

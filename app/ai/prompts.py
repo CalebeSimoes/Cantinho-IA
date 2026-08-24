@@ -234,6 +234,8 @@ Responsavel:
 - autor/Calebe/Caleb/eu -> Eu
 - Carol/minha esposa -> Minha esposa
 - nos/precisamos/temos que -> Nos dois
+- em "Calebe lavar" ou "Carol assinar", o nome inicial e o responsavel;
+- solicitado_por representa o autor: Eu para Calebe, Minha esposa para Carol.
 
 Categorias: Casa, Saude, Estudo, Trabalho, Relacionamento, Lazer, Outro.
 Frequencias e regras:

@@ -7,6 +7,7 @@ from app.notion.client import (
     optional_property_name,
     property_name,
 )
+from app.notion.notifications import notify_routine_assignment
 from app.schemas.actions import (
     FinanceAction,
     WishlistAction,
@@ -210,5 +211,24 @@ def write_routine(a: RoutineAction) -> dict:
         }
     _optional_rich(props, ds, "Recorrencia", a.recurrence_rule)
     _optional_rich(props, ds, "Origem IA", a.source_key)
+    _optional_select(
+        props,
+        ds,
+        "Solicitado por",
+        a.solicitado_por,
+    )
 
-    return create_page(ds, props)
+    page = create_page(ds, props)
+    if page.get("id"):
+        notification = notify_routine_assignment(
+            page["id"],
+            a.tarefa,
+            a.responsavel,
+            a.solicitado_por,
+        )
+        page["_cantinho_notification"] = {
+            "sent": notification.sent,
+            "mode": notification.mode,
+            "recipients": list(notification.recipients),
+        }
+    return page

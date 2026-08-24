@@ -305,6 +305,11 @@ def process_message(
             return confirm(dest, a, missing)
         p = write_routine(a)
         summary = f"🌙 Adicionado à Rotina: {a.tarefa}"
+        notification = p.get("_cantinho_notification", {})
+        if notification.get("sent"):
+            summary += " · 🔔 responsável avisado"
+        elif notification.get("mode") == "failed":
+            summary += " · ⚠️ aviso mobile não enviado"
 
     else:
         raise RuntimeError(f"Destino não suportado: {dest}")

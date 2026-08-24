@@ -1,3 +1,13 @@
+# v3.3 - Identidade do remetente e notificação mobile
+
+- Autor do Inbox inferido automaticamente pelo `created_by` do Notion.
+- Campo Autor preenchido pelo Worker quando estava vazio.
+- Nome explícito no começo da frase passa a definir o responsável.
+- Remetente vira o responsável padrão quando a frase omite uma pessoa.
+- Rotina registra `Solicitado por` separadamente de `Responsável`.
+- Atribuições para outra pessoa geram @menção e aviso mobile no Notion.
+- Propriedade Pessoa `Notificar` funciona como fallback sem comentários.
+
 # v3.2 - Lazer e semântica de fim de semana
 
 - Frases com assistir, maratonar, jogar e ouvir passam a ser tarefas locais.

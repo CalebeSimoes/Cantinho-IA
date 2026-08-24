@@ -1,4 +1,4 @@
-# 🌿 Cantinho Ghibli AI v3.2
+# 🌿 Cantinho Ghibli AI v3.3
 
 A v2 usa o **Notion como interface mobile** e o PC como processador local.
 
@@ -124,6 +124,22 @@ A Wishlist v3.1 mantém `Preço estimado` por compatibilidade e acrescenta
 Expressões como `no`, `neste`, `fim` ou `final de semana` indicam uma ocasião
 pontual. A recorrência só é criada quando a frase diz explicitamente `todo`,
 `todos os`, `nos` ou `aos fins de semana`.
+
+## Identidade e avisos do casal v3.3
+
+O Worker identifica automaticamente a conta que criou a mensagem no Inbox.
+O responsável explícito vence o remetente; sem nome explícito, a tarefa fica
+com quem enviou:
+
+- Carolina envia `Assinar HBO` → Minha esposa.
+- Carolina envia `Calebe assinar HBO` → Eu.
+- Calebe envia `Carol lavar a louça hoje` → Minha esposa.
+- `Precisamos organizar a casa` → Nós dois.
+
+Quando alguém cria uma tarefa para a outra pessoa, o Cantinho envia uma
+@menção no registro da Rotina. O Notion entrega o aviso no Inbox e como push
+mobile conforme as preferências da conta. Se comentários não estiverem
+liberados para a integração, a propriedade `Notificar` é usada como fallback.
 
 ## Arquivos novos principais
 

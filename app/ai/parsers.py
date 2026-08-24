@@ -634,15 +634,55 @@ def _subject_responsible(message: str, author: str) -> str:
     partner = normalize(settings.partner_name)
     user = normalize(settings.user_name)
 
+    partner_aliases = {
+        alias for alias in {partner, "carol", "carolina"}
+        if alias
+    }
+    user_aliases = {
+        alias for alias in {user, "caleb", "calebe"}
+        if alias
+    }
+
     if re.search(
         r"\b(?:nos dois|juntos|precisamos|temos que|devemos|queremos|"
         r"vamos|planejamos)\b",
         t,
-    ) or (
-        partner in t
-        and any(alias in t for alias in {user, "caleb", "calebe"})
+    ) or any(
+        re.match(
+            rf"^(?:(?:o|a)\s+)?(?:{re.escape(left)})\s+e\s+"
+            rf"(?:(?:o|a)\s+)?(?:{re.escape(right)})\b",
+            t,
+        )
+        for left in user_aliases
+        for right in partner_aliases
+    ) or any(
+        re.match(
+            rf"^(?:(?:o|a)\s+)?(?:{re.escape(left)})\s+e\s+"
+            rf"(?:(?:o|a)\s+)?(?:{re.escape(right)})\b",
+            t,
+        )
+        for left in partner_aliases
+        for right in user_aliases
     ):
         return "Nós dois"
+
+    if any(
+        re.match(
+            rf"^(?:a\s+)?{re.escape(alias)}\b",
+            t,
+        )
+        for alias in partner_aliases
+    ):
+        return "Minha esposa"
+
+    if any(
+        re.match(
+            rf"^(?:o\s+)?{re.escape(alias)}\b",
+            t,
+        )
+        for alias in user_aliases
+    ):
+        return "Eu"
 
     partner_subject = bool(
         partner
@@ -657,10 +697,6 @@ def _subject_responsible(message: str, author: str) -> str:
     ):
         return "Minha esposa"
 
-    user_aliases = {
-        alias for alias in {user, "caleb", "calebe"}
-        if alias
-    }
     if any(
         re.match(
             rf"^(?:o\s+)?{re.escape(alias)}\b.*\b(?:precisa|deve|vai|tem que)\b",
@@ -701,7 +737,39 @@ def _strip_action_prefix(text: str) -> str:
                 value = updated.strip()
                 changed = True
 
+    known_names = [
+        normalize(settings.user_name),
+        "caleb",
+        "calebe",
+        normalize(settings.partner_name),
+        "carol",
+        "carolina",
+    ]
+    known_names = sorted(
+        {name for name in known_names if name},
+        key=len,
+        reverse=True,
+    )
+    names = "|".join(re.escape(name) for name in known_names)
+    value = re.sub(
+        rf"^(?:(?:o|a)\s+)?(?:{names})\s+e\s+"
+        rf"(?:(?:o|a)\s+)?(?:{names})\s+",
+        "",
+        value,
+        count=1,
+    )
+    value = re.sub(
+        rf"^(?:(?:o|a)\s+)?(?:{names}|eu)\s+",
+        "",
+        value,
+        count=1,
+    )
+
     return re.sub(r"^(?:de|que)\s+", "", value).strip(" .,-")
+
+
+def _requester(author: str) -> str:
+    return "Minha esposa" if author == "Carol" else "Eu"
 
 
 def _routine_frequency(message: str) -> str:
@@ -781,6 +849,7 @@ def fast_routine(
         recurrence_rule=recurrence.rule,
         observacao=message,
         responsavel=_subject_responsible(message, author),
+        solicitado_por=_requester(author),
         status="A fazer",
     )
 
@@ -894,7 +963,7 @@ def parse_routine(
     parsed = fast_routine(message, author)
     if parsed:
         return parsed
-    return structured_chat(
+    parsed = structured_chat(
         RoutineAction,
         ROUTINE_PROMPT,
         (
@@ -902,3 +971,5 @@ def parse_routine(
             f"Autor: {author}\nMensagem: {message}"
         ),
     )
+    parsed.solicitado_por = _requester(author)
+    return parsed

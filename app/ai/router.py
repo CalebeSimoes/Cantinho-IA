@@ -90,7 +90,7 @@ def score_message(message: str) -> dict[str, IntentScore]:
     temporal = contains_temporal_expression(t) or _looks_like_clock_time(t)
     bare_action = _matches(
         t,
-        r"^(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"^(?:(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina|eu)(?:\s+e\s+(?:(?:o|a)\s+)?(?:caleb|calebe|carol|carolina))?\s+)?(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
     )
 
     direct_interrogative = _matches(
