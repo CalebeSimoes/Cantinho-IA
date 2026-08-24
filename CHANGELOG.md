@@ -1,3 +1,11 @@
+# v3.2 - Lazer e semântica de fim de semana
+
+- Frases com assistir, maratonar, jogar e ouvir passam a ser tarefas locais.
+- Nova categoria Lazer na Rotina e no schema do Notion.
+- `fim/final de semana` passa a ser prazo pontual no próximo sábado.
+- Apenas formas explícitas como `todo` e `nos fins de semana` são recorrentes.
+- Roteamento e parsing determinísticos evitam depender do Ollama nesses casos.
+
 # v3.0 - Rotina inteligente, actions[] e Overview
 
 - Recorrências: diária, dia semanal, quinzenal, mensal, dias úteis e fim de semana.

@@ -228,6 +228,7 @@ class RoutineAction(BaseModel):
         "Estudo",
         "Trabalho",
         "Relacionamento",
+        "Lazer",
         "Outro",
     ] = "Outro"
     dia_data: date | None = None

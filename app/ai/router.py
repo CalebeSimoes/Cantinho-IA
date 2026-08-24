@@ -82,14 +82,15 @@ def score_message(message: str) -> dict[str, IntentScore]:
         r"\b(?:todo dia|todos os dias|diariamente|toda semana|semanalmente|"
         r"todo mes|mensalmente|a cada semana|a cada mes|uma vez por mes|"
         r"quinzenalmente|quinzenal|a cada 15 dias|dias uteis|"
-        r"todo fim de semana|nos fins de semana|"
+        r"todo (?:fim|final) de semana|"
+        r"(?:todos os|nos|aos) (?:fins|finais) de semana|"
         r"tod[oa]s? (?:primeir[oa] |segund[oa] |terceir[oa] |ultim[oa] )?"
         r"(?:segunda|terca|quarta|quinta|sexta|sabado|domingo))\b",
     )
     temporal = contains_temporal_expression(t) or _looks_like_clock_time(t)
     bare_action = _matches(
         t,
-        r"^(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"^(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
     )
 
     direct_interrogative = _matches(
@@ -243,7 +244,7 @@ def score_message(message: str) -> dict[str, IntentScore]:
         scores["rotina"].add(12, "recorrencia explicita")
     if _matches(
         t,
-        r"\b(?:limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
+        r"\b(?:limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|renovar|cancelar|assinar|instalar|consertar|preparar|pagar|comprar|adquirir|encomendar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer|visitar|ir)\b",
     ) and ordinary_task:
         scores["rotina"].add(4, "verbo de acao executavel")
     if bare_action and ordinary_task:

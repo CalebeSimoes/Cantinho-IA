@@ -43,8 +43,9 @@ def parse_recurrence(message: str, reference: date) -> RecurrenceInfo:
         return RecurrenceInfo("Dias úteis", "weekdays", due)
 
     if re.search(
-        r"\b(?:todo fim de semana|todos os fins de semana|"
-        r"nos fins de semana|fim de semana)\b",
+        r"\b(?:todo (?:fim|final) de semana|"
+        r"todos os (?:fins|finais) de semana|"
+        r"(?:nos|aos) (?:fins|finais) de semana)\b",
         text,
     ):
         return RecurrenceInfo(
@@ -109,7 +110,7 @@ def strip_recurrence_expression(message: str) -> str:
     patterns = [
         r"\b(?:todo dia|todos os dias|diariamente)\b",
         r"\b(?:(?:nos|em)\s+)?(?:dias uteis|de segunda a sexta)\b",
-        r"\b(?:(?:no|aos)\s+)?(?:todo fim de semana|todos os fins de semana|nos fins de semana|fim de semana)\b",
+        r"\b(?:todo (?:fim|final) de semana|todos os (?:fins|finais) de semana|(?:nos|aos) (?:fins|finais) de semana)\b",
         r"\b(?:quinzenalmente|quinzenal|a cada 15 dias)\b",
         r"\b(?:uma vez por mes|todo mes|todos os meses|mensalmente|a cada mes)\b",
         r"\b(?:toda semana|semanalmente|a cada semana)\b",

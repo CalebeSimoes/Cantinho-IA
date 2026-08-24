@@ -29,7 +29,7 @@ from app.schemas.actions import (
         ("Limpar geladeira quinzenalmente", "Quinzenal", "biweekly", date(2026, 8, 23)),
         ("Revisar contas uma vez por mês", "Mensal", "monthly:23", date(2026, 8, 23)),
         ("Tomar vitamina nos dias úteis", "Dias úteis", "weekdays", date(2026, 8, 24)),
-        ("Limpar quintal no fim de semana", "Fim de semana", "weekends", date(2026, 8, 29)),
+        ("Limpar quintal todo fim de semana", "Fim de semana", "weekends", date(2026, 8, 29)),
     ],
 )
 def test_recurrence_language_is_persistent(phrase, frequency, rule, due):

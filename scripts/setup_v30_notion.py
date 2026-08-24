@@ -90,6 +90,21 @@ def ensure_schema() -> list[str]:
                         ]
                     }
                 }
+
+            category = schema.get("Categoria", {}).get("select", {})
+            existing_categories = category.get("options", [])
+            category_names = {
+                item.get("name") for item in existing_categories
+            }
+            if "Lazer" not in category_names:
+                patch["Categoria"] = {
+                    "select": {
+                        "options": [
+                            {"id": item["id"]}
+                            for item in existing_categories
+                        ] + [{"name": "Lazer", "color": "purple"}]
+                    }
+                }
         if patch:
             update_data_source(ds, patch)
             changes.append(label)

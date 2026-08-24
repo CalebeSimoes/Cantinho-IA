@@ -83,6 +83,7 @@ def contains_temporal_expression(text: str) -> bool:
         r"\bdepois de amanha\b",
         r"\bdaqui a \d+ dias?\b",
         r"\b(?:fim|final|inicio|comeco) (?:do|deste|desse) (?:proximo )?mes\b",
+        r"\b(?:fim|final) (?:de|da) semana\b",
         r"\b(?:semana|mes) que vem\b",
         r"\b(?:proxima?\s+)?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?(?: que vem)?\b",
         r"\bdia\s+\d{1,2}\b",
@@ -165,6 +166,10 @@ def resolve_date_expression(
     if match:
         return reference + timedelta(days=int(match.group(1)))
 
+    if re.search(r"\b(?:fim|final) (?:de|da) semana\b", t):
+        days_ahead = (WEEKDAYS["sabado"] - reference.weekday()) % 7
+        return reference + timedelta(days=days_ahead)
+
     for weekday_name, weekday in WEEKDAYS.items():
         if re.search(
             rf"\b(?:proxima?\s+)?{weekday_name}(?:-feira)?(?: que vem)?\b",
@@ -195,6 +200,7 @@ def strip_temporal_expressions(text: str) -> str:
     month_names = "|".join(MONTHS)
     patterns = [
         r"\b(?:no|na|ate|para|pro|pra)?\s*(?:fim|final|inicio|comeco) (?:do|deste|desse) (?:proximo )?mes\b",
+        r"\b(?:(?:no|neste|nesse|ate(?: o)?|para(?: o)?|pro|pra)\s+)?(?:fim|final) (?:de|da) semana\b",
         r"\b(?:na|ate|para)?\s*(?:semana|mes) que vem\b",
         r"\b(?:hoje|amanha|depois de amanha)\b",
         r"\bdaqui a \d+ dias?\b",

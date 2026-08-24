@@ -731,6 +731,10 @@ def _routine_category(task: str) -> str:
             "Relacionamento",
             r"\b(?:casal|encontro|presente para|aniversario de namoro|tempo juntos)\b",
         ),
+        (
+            "Lazer",
+            r"\b(?:assistir|maratonar|jogar|videogame|filme|serie|documentario|anime|podcast|musica)\b",
+        ),
     ]
     for category, pattern in categories:
         if re.search(pattern, t):
@@ -752,13 +756,13 @@ def fast_routine(
         r"devo|deve|devemos|nao esquecer|lembrar de|me lembr(?:a|e)(?: de)?|"
         r"todo dia|toda semana|"
         r"todo mes|diariamente|semanalmente|mensalmente|quinzenalmente|"
-        r"dias uteis|fim de semana|uma vez por mes|"
+        r"dias uteis|(?:fim|final) (?:de|da) semana|uma vez por mes|"
         r"toda (?:segunda|terca|quarta|quinta|sexta|sabado|domingo)|"
         r"tarefa|rotina)\b",
         t,
     )
     action_signal = re.search(
-        r"\b(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|instalar|consertar|preparar|pagar|comprar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
+        r"\b(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
         t,
     )
     if desire or not (task_signal or action_signal):

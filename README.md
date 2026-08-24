@@ -1,4 +1,4 @@
-# 🌿 Cantinho Ghibli AI v3.0
+# 🌿 Cantinho Ghibli AI v3.2
 
 A v2 usa o **Notion como interface mobile** e o PC como processador local.
 
@@ -113,6 +113,17 @@ são tratados como preço sem contexto monetário.
 
 A Wishlist v3.1 mantém `Preço estimado` por compatibilidade e acrescenta
 `Relação do preço` (Máximo, Aproximado, Exato ou Mínimo) e `Responsável`.
+
+## Lazer e fim de semana v3.2
+
+- `Assistir série O Mentalista final de semana` → Rotina, categoria Lazer,
+  prazo no próximo sábado e frequência Pontual.
+- `Assistir O Mentalista todo fim de semana` → Rotina recorrente,
+  frequência Fim de semana.
+
+Expressões como `no`, `neste`, `fim` ou `final de semana` indicam uma ocasião
+pontual. A recorrência só é criada quando a frase diz explicitamente `todo`,
+`todos os`, `nos` ou `aos fins de semana`.
 
 ## Arquivos novos principais
 

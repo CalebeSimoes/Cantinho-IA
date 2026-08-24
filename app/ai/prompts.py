@@ -235,14 +235,17 @@ Responsavel:
 - Carol/minha esposa -> Minha esposa
 - nos/precisamos/temos que -> Nos dois
 
-Categorias: Casa, Saude, Estudo, Trabalho, Relacionamento, Outro.
+Categorias: Casa, Saude, Estudo, Trabalho, Relacionamento, Lazer, Outro.
 Frequencias e regras:
 - todo dia -> Diaria, recurrence_rule="daily";
 - toda terca -> Semanal, recurrence_rule="weekly:1";
 - quinzenalmente -> Quinzenal, recurrence_rule="biweekly";
 - uma vez por mes -> Mensal, recurrence_rule="monthly:DIA";
 - dias uteis -> Dias uteis, recurrence_rule="weekdays";
-- fim de semana -> Fim de semana, recurrence_rule="weekends";
+- todo fim/final de semana ou nos fins de semana -> Fim de semana,
+  recurrence_rule="weekends";
+- no/neste fim/final de semana -> Pontual, recurrence_rule="once",
+  com dia_data no proximo sabado;
 - sem repeticao -> Pontual, recurrence_rule="once".
 Data e opcional; nunca invente uma data sem expressao temporal.
 
