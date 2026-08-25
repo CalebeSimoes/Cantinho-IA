@@ -101,6 +101,55 @@ def test_explicit_inbox_author_overrides_creator(monkeypatch):
     assert item.author_inferred is False
 
 
+def test_inbox_waits_for_message_to_stop_changing(monkeypatch):
+    inbox._stability_cache.clear()
+    first = inbox.InboxItem(
+        "page-1",
+        "Jogar o lixo fora toda terça, quint",
+        "Automático",
+        "Eu",
+        last_edited_time="2026-08-25T14:54:00.000Z",
+    )
+    complete = inbox.InboxItem(
+        "page-1",
+        "Jogar o lixo fora toda terça, quinta e sábado",
+        "Automático",
+        "Eu",
+        last_edited_time="2026-08-25T14:55:00.000Z",
+    )
+
+    assert inbox.stable_items(
+        [first], stability_seconds=20, monotonic_now=100
+    ) == []
+    assert inbox.stable_items(
+        [complete], stability_seconds=20, monotonic_now=110
+    ) == []
+    assert inbox.stable_items(
+        [complete], stability_seconds=20, monotonic_now=129
+    ) == []
+    assert inbox.stable_items(
+        [complete], stability_seconds=20, monotonic_now=130
+    ) == [complete]
+
+
+def test_inbox_stability_cache_drops_pages_no_longer_pending():
+    inbox._stability_cache.clear()
+    item = inbox.InboxItem(
+        "page-1",
+        "Lavar a louça",
+        "Automático",
+        "Eu",
+        last_edited_time="2026-08-25T14:55:00.000Z",
+    )
+    inbox.stable_items(
+        [item], stability_seconds=20, monotonic_now=100
+    )
+
+    inbox.stable_items([], stability_seconds=20, monotonic_now=110)
+
+    assert inbox._stability_cache == {}
+
+
 @pytest.mark.parametrize(
     "phrase",
     [

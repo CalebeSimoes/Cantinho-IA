@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     partner_name: str = "Carol"
     app_timezone: str = "America/Sao_Paulo"
     worker_poll_seconds: int = 10
+    inbox_stability_seconds: int = 20
+    radar_enabled: bool = True
+    radar_hour: int = 7
+    radar_minute: int = 30
+    radar_lookahead_days: int = 2
+    radar_max_items: int = 5
+    radar_retry_minutes: int = 30
+    radar_repeat_days: int = 3
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore", case_sensitive=False)
 
 settings = Settings()

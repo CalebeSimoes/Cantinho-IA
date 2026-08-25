@@ -815,6 +815,7 @@ def fast_routine(
     author: str = "Eu",
 ) -> RoutineAction | None:
     t = normalize(message)
+    recurrence = parse_recurrence(message, now().date())
     desire = re.search(
         r"\b(?:quero|queremos|queria|gostaria)\s+(?:comprar|ter|ganhar|assinar|conhecer|visitar)\b",
         t,
@@ -833,14 +834,17 @@ def fast_routine(
         r"\b(?:assinar|renovar|cancelar|limpar|lavar|arrumar|organizar|resolver|ligar|enviar|buscar|levar|estudar|treinar|assistir|maratonar|jogar|ouvir|instalar|consertar|preparar|pagar|comprar|pesquisar|comparar|cotar|procurar|separar|conferir|revisar|atualizar|responder|devolver|retirar|guardar|cozinhar|fazer)\b",
         t,
     )
-    if desire or not (task_signal or action_signal):
+    if desire or not (
+        task_signal
+        or action_signal
+        or recurrence.rule != "once"
+    ):
         return None
 
     task = _strip_action_prefix(message)
     if not task:
         return None
 
-    recurrence = parse_recurrence(message, now().date())
     return RoutineAction(
         tarefa=task[:200],
         categoria=_routine_category(task),

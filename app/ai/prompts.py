@@ -241,6 +241,8 @@ Categorias: Casa, Saude, Estudo, Trabalho, Relacionamento, Lazer, Outro.
 Frequencias e regras:
 - todo dia -> Diaria, recurrence_rule="daily";
 - toda terca -> Semanal, recurrence_rule="weekly:1";
+- toda terca, quinta e sabado ou as tercas, quintas e sabados -> Semanal,
+  recurrence_rule="weekly:1,3,5";
 - quinzenalmente -> Quinzenal, recurrence_rule="biweekly";
 - uma vez por mes -> Mensal, recurrence_rule="monthly:DIA";
 - dias uteis -> Dias uteis, recurrence_rule="weekdays";

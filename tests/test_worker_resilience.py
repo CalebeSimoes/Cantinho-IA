@@ -5,7 +5,7 @@ from app.schemas.actions import ProcessResult
 def test_worker_keeps_health_history_when_cycle_fails(monkeypatch):
     heartbeats = []
 
-    def fail_cycle():
+    def fail_cycle(**_kwargs):
         raise TimeoutError("notion indisponivel")
 
     def stop_after_cycle(_seconds):

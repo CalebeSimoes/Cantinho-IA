@@ -1,3 +1,25 @@
+# v3.5 - Radar proativo do casal
+
+- Worker envia um resumo diário somente quando existem itens acionáveis.
+- Prioridades para conflitos, atrasos, tarefas de hoje, agenda e Wishlist.
+- Sinal de desequilíbrio na divisão de tarefas abertas.
+- Máximo de cinco itens, com @menção das duas contas na página mobile.
+- Estado diário atômico evita repetição; falhas usam retry de 30 minutos.
+- Modo de preview lê o Notion sem notificar nem alterar estado.
+- Listas semanais como `toda terça, quinta e sábado` são persistidas em uma
+  única regra e avançam para o próximo dia correto após cada conclusão.
+- Formato monetário de Finanças, Wishlist e Lugares migrado de dólar para real
+  brasileiro sem alterar os valores armazenados.
+- Worker aguarda a mensagem do Inbox ficar estável antes de processar, evitando
+  títulos cortados enquanto alguém ainda está digitando no Notion.
+
+# v3.4 - Bateria intensiva de intenções
+
+- Corpus permanente com 400 frases cotidianas do casal.
+- Avaliação real e resumível do qwen3:4b, sem escrita no Notion.
+- Runner compara Ollama puro com as regras do fluxo híbrido.
+- Regressões de perguntas, compras, lugares, tarefas e múltiplas ações.
+
 # v3.3 - Identidade do remetente e notificação mobile
 
 - Autor do Inbox inferido automaticamente pelo `created_by` do Notion.

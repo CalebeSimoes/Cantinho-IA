@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+import time
 from zoneinfo import ZoneInfo
 
 from app.config import settings
@@ -22,6 +23,10 @@ class InboxItem:
     author: str
     creator_user_id: str | None = None
     author_inferred: bool = False
+    last_edited_time: str | None = None
+
+
+_stability_cache: dict[str, tuple[str, float]] = {}
 
 
 def _result_value(result: str, result_url: str | None = None) -> dict:
@@ -103,9 +108,50 @@ def pending_items():
                     explicit_author or inferred_author or "Eu",
                     creator_user_id,
                     not explicit_author and inferred_author is not None,
+                    p.get("last_edited_time"),
                 )
             )
     return out
+
+
+def stable_items(
+    items: list[InboxItem],
+    *,
+    stability_seconds: int | None = None,
+    monotonic_now: float | None = None,
+) -> list[InboxItem]:
+    """Só libera mensagens inalteradas por uma janela contínua."""
+    delay = (
+        settings.inbox_stability_seconds
+        if stability_seconds is None
+        else stability_seconds
+    )
+    if delay <= 0:
+        return items
+
+    current = time.monotonic() if monotonic_now is None else monotonic_now
+    pending_ids = {item.page_id for item in items}
+    for page_id in set(_stability_cache) - pending_ids:
+        _stability_cache.pop(page_id, None)
+
+    ready = []
+    for item in items:
+        # Objetos legados e stubs de teste não possuem o timestamp do Notion.
+        # Eles continuam compatíveis e são processados imediatamente.
+        if not item.last_edited_time:
+            ready.append(item)
+            continue
+
+        previous = _stability_cache.get(item.page_id)
+        if previous is None or previous[0] != item.message:
+            _stability_cache[item.page_id] = (item.message, current)
+            continue
+        if current - previous[1] < delay:
+            continue
+
+        ready.append(item)
+        _stability_cache.pop(item.page_id, None)
+    return ready
 
 
 def set_author(page_id: str, author: str):

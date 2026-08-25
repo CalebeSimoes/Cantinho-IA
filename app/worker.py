@@ -1,12 +1,19 @@
 import argparse
+import sys
 import time
 import traceback
 
 from app.config import settings
 from app.health import write_worker_heartbeat
 from app.learning import record_learning_case
-from app.notion.inbox import pending_items, set_author, set_status
+from app.notion.inbox import (
+    pending_items,
+    set_author,
+    set_status,
+    stable_items,
+)
 from app.processor import process_message
+from app.radar import preview_radar, run_daily_radar
 
 
 def _learn_safely(item, status, destination, summary):
@@ -39,10 +46,17 @@ def _persist_inferred_author_safely(item):
         traceback.print_exc()
 
 
-def process_once():
-    items = pending_items()
+def process_once(*, stabilize: bool = False):
+    pending = pending_items()
+    items = stable_items(pending) if stabilize else pending
     if not items:
-        print("✨ Nenhuma anotação nova.", flush=True)
+        if pending:
+            print(
+                "⌛ Anotação nova aguardando o fim da digitação.",
+                flush=True,
+            )
+        else:
+            print("✨ Nenhuma anotação nova.", flush=True)
         return 0
 
     print(f"📥 {len(items)} anotação(ões) pendente(s).", flush=True)
@@ -95,6 +109,32 @@ def process_once():
     return len(items)
 
 
+def _run_radar_safely(*, force: bool = False):
+    try:
+        result = run_daily_radar(force=force)
+    except Exception as exc:
+        print(
+            f"⚠️ Radar falhou sem interromper o Worker: "
+            f"{type(exc).__name__}: {exc}",
+            flush=True,
+        )
+        traceback.print_exc()
+        return None
+
+    if result.status == "sent":
+        print(
+            f"🌿 Radar enviado com {len(result.alerts)} alerta(s).",
+            flush=True,
+        )
+    elif result.status == "empty":
+        print("🌿 Radar verificado: nada acionável hoje.", flush=True)
+    elif result.status == "suppressed":
+        print("🌿 Radar idêntico recente: envio suprimido.", flush=True)
+    elif result.status == "failed":
+        print(f"⚠️ Radar não enviado: {result.reason}", flush=True)
+    return result
+
+
 def run_forever():
     print(
         "🌿 Cantinho Ghibli Worker iniciado. CTRL+C para parar.",
@@ -104,6 +144,12 @@ def run_forever():
         f"Intervalo: {settings.worker_poll_seconds}s",
         flush=True,
     )
+    if settings.radar_enabled:
+        print(
+            f"Radar diário: {settings.radar_hour:02d}:"
+            f"{settings.radar_minute:02d}",
+            flush=True,
+        )
 
     consecutive_failures = 0
 
@@ -115,7 +161,8 @@ def run_forever():
             )
 
             try:
-                process_once()
+                process_once(stabilize=True)
+                _run_radar_safely()
             except Exception as exc:
                 # Falhas gerais de Notion/rede nao encerram mais o processo.
                 # O Watchdog recebe um heartbeat recente, mas degradado.
@@ -145,7 +192,19 @@ def run_forever():
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--radar-now", action="store_true")
+    ap.add_argument("--radar-preview", action="store_true")
     args = ap.parse_args()
-    process_once() if args.once else run_forever()
+    if args.radar_preview:
+        preview = preview_radar()
+        print(preview.message or "🌿 Radar: nada acionável.", flush=True)
+    elif args.radar_now:
+        _run_radar_safely(force=True)
+    elif args.once:
+        process_once()
+    else:
+        run_forever()

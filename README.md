@@ -1,4 +1,4 @@
-# 🌿 Cantinho Ghibli AI v3.3
+# 🌿 Cantinho Ghibli AI v3.5
 
 A v2 usa o **Notion como interface mobile** e o PC como processador local.
 
@@ -16,7 +16,8 @@ Watchdog local
 router híbrido (Python + Ollama tipado)
    ├→ REGISTRAR → Finanças | Wishlist | Lugares | Calendário | Rotina
    ├→ PLANEJAR → actions[] → confirmar → transação idempotente
-   └→ CONSULTAR → leitores → filtros/cálculos
+   ├→ CONSULTAR → leitores → filtros/cálculos
+   └→ RADAR 07:30 → prioridades → @menção mobile
    ↓
 Resultado volta para a Caixa de Entrada
 ```
@@ -125,6 +126,27 @@ Expressões como `no`, `neste`, `fim` ou `final de semana` indicam uma ocasião
 pontual. A recorrência só é criada quando a frase diz explicitamente `todo`,
 `todos os`, `nos` ou `aos fins de semana`.
 
+## Recorrências e moeda v3.5
+
+Listas explícitas de dias são mantidas como uma única rotina semanal:
+
+- `Jogar lixo fora toda terça, quinta e sábado` → `weekly:1,3,5`;
+- `Jogar o lixo fora às terças, quintas e sábados` → `weekly:1,3,5`.
+
+Ao concluir a tarefa, a próxima data segue o ciclo terça → quinta → sábado →
+terça. Um dia isolado sem marcador de repetição continua pontual: `Jogar o
+lixo fora sábado` não vira rotina semanal por inferência.
+
+No modo contínuo, o Worker também espera 20 segundos sem mudanças antes de
+processar uma nova mensagem. Essa estabilização evita capturar títulos pela
+metade enquanto alguém ainda está digitando no Notion. O intervalo pode ser
+ajustado com `INBOX_STABILITY_SECONDS`.
+
+Os campos `Valor`, `Preço estimado` e `Valor estimado` usam o formato nativo
+de real brasileiro no Notion. A migração é idempotente e pode ser reaplicada:
+
+    .\.venv\Scripts\python.exe -m scripts.setup_v35_currency
+
 ## Identidade e avisos do casal v3.3
 
 O Worker identifica automaticamente a conta que criou a mensagem no Inbox.
@@ -141,7 +163,38 @@ Quando alguém cria uma tarefa para a outra pessoa, o Cantinho envia uma
 mobile conforme as preferências da conta. Se comentários não estiverem
 liberados para a integração, a propriedade `Notificar` é usada como fallback.
 
+## Radar proativo do casal v3.5
+
+Todos os dias, a partir das 07:30, o Worker consulta o Notion e envia uma única
+@menção para Calebe e Carol quando encontra algo acionável. O resumo contém no
+máximo cinco itens, nesta ordem de prioridade:
+
+- conflitos de compromissos no mesmo horário;
+- tarefas atrasadas e tarefas de hoje;
+- compromissos das próximas 48 horas;
+- compras da Wishlist com data próxima;
+- desequilíbrio relevante na divisão de tarefas abertas.
+
+O Radar não usa Ollama, não cria registros nas bases e não inventa informação
+ausente. Como Finanças não possui uma coluna de vencimento, contas a vencer não
+são anunciadas nesta versão. O estado em state/radar-state.json impede
+repetição; falhas de notificação aguardam 30 minutos antes de uma nova
+tentativa. Um resumo completamente idêntico fica suprimido por três dias.
+
+Para inspecionar sem enviar:
+
+    .\.venv\Scripts\python.exe -m app.worker --radar-preview
+
+Para forçar um envio de teste:
+
+    .\.venv\Scripts\python.exe -m app.worker --radar-now
+
+Horário, janela e quantidade são configuráveis por RADAR_HOUR,
+RADAR_MINUTE, RADAR_LOOKAHEAD_DAYS e RADAR_MAX_ITEMS.
+
 ## Arquivos novos principais
+
+- app/radar.py: prioriza e envia o Radar diário sem depender do Ollama.
 
 - `app/worker.py`: verifica pendências automaticamente.
 - `app/health.py`: publica o heartbeat atômico do Worker.
@@ -163,6 +216,8 @@ liberados para a integração, a propriedade `Notificar` é usada como fallback.
 - `app/action_executor.py`: executa planos recuperáveis e idempotentes.
 - `app/action_store.py`: persiste confirmação e progresso de transações.
 - `scripts/setup_v30_notion.py`: migra schemas e mantém o dashboard.
+- `scripts/setup_v35_currency.py`: garante real brasileiro nos campos
+  monetários.
 - `run_worker_windows.ps1`: roda só o worker.
 - `worker_once_windows.ps1`: processa a fila uma vez.
 - `start_cantinho_windows.ps1`: inicia Ollama, worker e API.

@@ -17,6 +17,10 @@ WEEKDAYS = {
     "domingo": 6,
 }
 
+WEEKDAY_PATTERN = (
+    r"segunda|terca|quarta|quinta|sexta|sabado|domingo"
+)
+
 
 @dataclass(frozen=True)
 class RecurrenceInfo:
@@ -27,6 +31,46 @@ class RecurrenceInfo:
 
 def _on_or_after(reference: date, weekday: int) -> date:
     return reference + timedelta(days=(weekday - reference.weekday()) % 7)
+
+
+def _mentioned_weekdays(text: str) -> tuple[int, ...]:
+    """Retorna dias citados, sem duplicatas, na ordem da semana."""
+    mentioned = {
+        WEEKDAYS[match.group(1)]
+        for match in re.finditer(
+            rf"\b({WEEKDAY_PATTERN})(?:s|-feiras?)?\b",
+            text,
+        )
+    }
+    return tuple(sorted(mentioned))
+
+
+def _weekday_list_is_recurring(
+    text: str,
+    weekdays: tuple[int, ...],
+) -> bool:
+    if not weekdays:
+        return False
+    explicit_weekday_schedule = re.search(
+        rf"\b(?:toda|todo|todas as|todos os|as|nas|aos)\s+"
+        rf"(?:{WEEKDAY_PATTERN})(?:s|-feiras?)?\b",
+        text,
+    )
+    explicit_weekly_frequency = (
+        len(weekdays) >= 2
+        and re.search(
+            r"\b(?:toda semana|semanalmente|a cada semana)\b",
+            text,
+        )
+    )
+    return bool(explicit_weekday_schedule or explicit_weekly_frequency)
+
+
+def _first_weekday_on_or_after(
+    reference: date,
+    weekdays: tuple[int, ...],
+) -> date:
+    return min(_on_or_after(reference, weekday) for weekday in weekdays)
 
 
 def parse_recurrence(message: str, reference: date) -> RecurrenceInfo:
@@ -54,24 +98,19 @@ def parse_recurrence(message: str, reference: date) -> RecurrenceInfo:
             _on_or_after(reference, 5),
         )
 
-    weekday_match = re.search(
-        r"\b(?:toda|todo|todas as|todos os)\s+"
-        r"(segunda|terca|quarta|quinta|sexta|sabado|domingo)"
-        r"(?:-feira)?\b",
-        text,
-    )
-    if weekday_match:
-        weekday = WEEKDAYS[weekday_match.group(1)]
+    weekdays = _mentioned_weekdays(text)
+    if _weekday_list_is_recurring(text, weekdays):
+        rule_days = ",".join(str(weekday) for weekday in weekdays)
         if re.search(r"\bquinzenal(?:mente)?\b", text):
             return RecurrenceInfo(
                 "Quinzenal",
-                f"biweekly:{weekday}",
-                _on_or_after(reference, weekday),
+                f"biweekly:{rule_days}",
+                _first_weekday_on_or_after(reference, weekdays),
             )
         return RecurrenceInfo(
             "Semanal",
-            f"weekly:{weekday}",
-            _on_or_after(reference, weekday),
+            f"weekly:{rule_days}",
+            _first_weekday_on_or_after(reference, weekdays),
         )
 
     if re.search(r"\b(?:quinzenalmente|quinzenal|a cada 15 dias)\b", text):
@@ -114,7 +153,11 @@ def strip_recurrence_expression(message: str) -> str:
         r"\b(?:quinzenalmente|quinzenal|a cada 15 dias)\b",
         r"\b(?:uma vez por mes|todo mes|todos os meses|mensalmente|a cada mes)\b",
         r"\b(?:toda semana|semanalmente|a cada semana)\b",
-        r"\b(?:toda|todo|todas as|todos os)\s+(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?\b",
+        rf"\b(?:toda|todo|todas as|todos os|as|nas|aos)\s+"
+        rf"(?:{WEEKDAY_PATTERN})(?:s|-feiras?)?"
+        rf"(?:\s*(?:,|e)?\s*(?:{WEEKDAY_PATTERN})(?:s|-feiras?)?)+\b",
+        rf"\b(?:toda|todo|todas as|todos os|as|nas|aos)\s+"
+        rf"(?:{WEEKDAY_PATTERN})(?:s|-feiras?)?\b",
     ]
     for pattern in patterns:
         value = re.sub(pattern, " ", value)
@@ -148,8 +191,14 @@ def next_occurrence(
     if rule == "weekends":
         return _on_or_after(completed_on + timedelta(days=1), 5)
     if rule.startswith("weekly:"):
-        weekday = int(rule.split(":", 1)[1])
-        return _on_or_after(completed_on + timedelta(days=1), weekday)
+        weekdays = tuple(
+            int(value)
+            for value in rule.split(":", 1)[1].split(",")
+        )
+        return _first_weekday_on_or_after(
+            completed_on + timedelta(days=1),
+            weekdays,
+        )
     if rule.startswith("biweekly"):
         anchor = current_due or completed_on
         candidate = anchor + timedelta(days=14)

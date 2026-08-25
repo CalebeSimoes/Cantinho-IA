@@ -54,6 +54,54 @@ def test_fast_routine_removes_weekday_from_task(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "phrase",
+    [
+        "Jogar lixo fora toda terça, quinta, sábado",
+        "Jogar o lixo fora as terças quintas e sábados",
+        "Jogar o lixo fora às terças, quintas e sábados",
+        "Jogar o lixo fora nas terças, quintas e sábados",
+    ],
+)
+def test_fast_routine_supports_multiple_weekdays(
+    monkeypatch,
+    phrase,
+):
+    monkeypatch.setattr(
+        parsers,
+        "now",
+        lambda: type(
+            "Now",
+            (),
+            {"date": lambda self: date(2026, 8, 25)},
+        )(),
+    )
+    action = parsers.fast_routine(phrase)
+    assert action.tarefa in {"jogar lixo fora", "jogar o lixo fora"}
+    assert action.frequencia == "Semanal"
+    assert action.recurrence_rule == "weekly:1,3,5"
+    assert action.dia_data == date(2026, 8, 25)
+
+
+def test_bare_single_weekday_remains_a_one_off_date():
+    parsed = parse_recurrence(
+        "Jogar o lixo fora sábado",
+        date(2026, 8, 25),
+    )
+    assert parsed.frequency == "Pontual"
+    assert parsed.rule == "once"
+    assert parsed.due_date == date(2026, 8, 29)
+
+
+def test_two_bare_weekdays_do_not_invent_recurrence():
+    parsed = parse_recurrence(
+        "Viajar terça e voltar quinta",
+        date(2026, 8, 25),
+    )
+    assert parsed.frequency == "Pontual"
+    assert parsed.rule == "once"
+
+
+@pytest.mark.parametrize(
     ("phrase", "task"),
     [
         ("Tomar vitamina nos dias úteis", "tomar vitamina"),
@@ -76,6 +124,8 @@ def test_recurrence_prepositions_do_not_leak_into_task(
     [
         ("daily", date(2026, 8, 23), date(2026, 8, 23), date(2026, 8, 24)),
         ("weekly:4", date(2026, 8, 28), date(2026, 8, 28), date(2026, 9, 4)),
+        ("weekly:1,3,5", date(2026, 8, 25), date(2026, 8, 25), date(2026, 8, 27)),
+        ("weekly:1,3,5", date(2026, 8, 29), date(2026, 8, 29), date(2026, 9, 1)),
         ("biweekly", date(2026, 8, 23), date(2026, 8, 23), date(2026, 9, 6)),
         ("monthly:31", date(2026, 8, 31), date(2026, 8, 31), date(2026, 9, 30)),
         ("weekdays", date(2026, 8, 28), date(2026, 8, 28), date(2026, 8, 31)),
